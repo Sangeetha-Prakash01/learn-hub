@@ -6,7 +6,6 @@ import { useSidebarStore } from '../../../store/sidebarStore';
 import { Menu, X, GraduationCap, ChevronLeft, ChevronRight, Play, Lock, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import { OrbBackground } from '../../components/Design';
-import AIChat from '../../components/AIChat';
 
 function ProgressBar({ percent }: { percent: number }) {
   return (
@@ -165,11 +164,6 @@ export default function SubjectLayout({ children }: { children: React.ReactNode 
         </div>
         {children}
       </div>
-
-      <AIChat 
-        courseTitle={useSidebarStore.getState().subjectTitle} 
-        lessonTitle={useSidebarStore.getState().sections.flatMap(s => s.videos).find(v => String(v.id) === currentVideoId)?.title}
-      />
     </div>
   );
 }

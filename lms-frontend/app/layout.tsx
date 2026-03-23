@@ -8,6 +8,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import { BookOpen, LogOut, User, LayoutDashboard, GraduationCap, Zap, Layers, Menu, X, ChevronDown, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { OrbBackground } from './components/Design';
+import AIChat from './components/AIChat';
 
 function AuthCheck({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, login } = useAuthStore();
@@ -139,6 +140,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="relative min-h-screen">
              <Navbar />
              <main className="relative z-10">{children}</main>
+             <AIChat />
           </div>
           <Toaster position="top-right" toastOptions={{
             style: { 
