@@ -14,16 +14,16 @@ export const aiChat = async (req: Request, res: Response) => {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    
+
     // Model names to try in sequence - using v1 standard IDs
-    const modelNames = ["gemini-1.5-flash", "gemini-pro", "gemini-1.0-pro"];
+    const modelNames = ["gemini-1.5-flash"];
     let lastError = null;
 
     for (const modelName of modelNames) {
       try {
         console.log(`🤖 Attempting AI query with: ${modelName}`);
         const model = genAI.getGenerativeModel({ model: modelName });
-        
+
         const prompt = `You are an expert AI study assistant for the LearnHub LMS.
         Context:
         - Course: "${context?.courseTitle || 'Main Studies'}"
@@ -34,7 +34,7 @@ export const aiChat = async (req: Request, res: Response) => {
 
         const result = await model.generateContent(prompt);
         const text = result.response.text();
-        
+
         console.log(`✅ Success with ${modelName}`);
         return res.json({ success: true, reply: text });
       } catch (err: any) {
