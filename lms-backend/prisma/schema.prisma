@@ -1,0 +1,180 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  INSTRUCTOR
+  ADMIN
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role     @default(STUDENT)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  subjects      Subject[]
+  enrollments   Enrollment[]
+  videoProgress VideoProgress[]
+  refreshTokens RefreshToken[]
+  payments      Payment[]
+  badges        UserBadge[]
+
+  @@map("users")
+}
+
+model Badge {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String   @db.Text
+  icon        String   // Lucide icon name or emoji
+  criteria    String?  // JSON string or description
+  createdAt    DateTime @default(now())
+
+  users       UserBadge[]
+
+  @@map("badges")
+}
+
+model UserBadge {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  badgeId   Int
+  earnedAt  DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  badge     Badge    @relation(fields: [badgeId], references: [id])
+
+  @@unique([userId, badgeId])
+  @@map("user_badges")
+}
+
+model Subject {
+  id          Int      @id @default(autoincrement())
+  title       String
+  slug        String   @unique
+  description String   @db.Text
+  thumbnail   String?
+  price       Decimal  @default(0) @db.Decimal(10, 2)
+  isPublished Boolean  @default(false)
+  instructorId Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  instructor  User         @relation(fields: [instructorId], references: [id])
+  sections    Section[]
+  enrollments Enrollment[]
+  payments    Payment[]
+
+  @@map("subjects")
+}
+
+model Section {
+  id         Int      @id @default(autoincrement())
+  subjectId  Int
+  title      String
+  orderIndex Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  videos  Video[]
+
+  @@unique([subjectId, orderIndex])
+  @@map("sections")
+}
+
+model Video {
+  id              Int      @id @default(autoincrement())
+  sectionId       Int
+  title           String
+  description     String?  @db.Text
+  youtubeUrl      String
+  orderIndex      Int
+  durationSeconds Int?
+  isFree          Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  section       Section         @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  videoProgress VideoProgress[]
+
+  @@unique([sectionId, orderIndex])
+  @@map("videos")
+}
+
+model Enrollment {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  subjectId Int
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  subject Subject @relation(fields: [subjectId], references: [id])
+
+  @@unique([userId, subjectId])
+  @@map("enrollments")
+}
+
+model VideoProgress {
+  id                  Int       @id @default(autoincrement())
+  userId              Int
+  videoId             Int
+  lastPositionSeconds Int       @default(0)
+  isCompleted         Boolean   @default(false)
+  completedAt         DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  user  User  @relation(fields: [userId], references: [id])
+  video Video @relation(fields: [videoId], references: [id])
+
+  @@unique([userId, videoId])
+  @@map("video_progress")
+}
+
+model RefreshToken {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  tokenHash String
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, tokenHash])
+  @@map("refresh_tokens")
+}
+
+model Payment {
+  id              Int           @id @default(autoincrement())
+  userId          Int
+  subjectId       Int
+  stripePaymentId String        @unique
+  amount          Decimal       @db.Decimal(10, 2)
+  currency        String        @default("usd")
+  status          PaymentStatus @default(PENDING)
+  createdAt       DateTime      @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  subject Subject @relation(fields: [subjectId], references: [id])
+
+  @@map("payments")
+}
